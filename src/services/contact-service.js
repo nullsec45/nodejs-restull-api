@@ -2,6 +2,8 @@ import { validate } from "../validations/validation.js";
 import {
   createContactValidation,
   getContactValidation,
+  searchContactValidation,
+  updateContactValidation,
 } from "../validations/contact-validation.js";
 import { prismaClient } from "../applications/database.js";
 import { ResponseError } from "../errors/response-errror.js";
@@ -46,4 +48,128 @@ const get = async (user, contactId) => {
   return contact;
 };
 
-export default { create, get };
+const update = async (user, request) => {
+  const contact = validate(updateContactValidation, request);
+
+  const checkContact = await prismaClient.contact.count({
+    where: {
+      username: user.username,
+      id: contact.id,
+    },
+  });
+
+  if (checkContact == 0) {
+    throw new ResponseError(404, "Contact is not found!");
+  }
+
+  return prismaClient.contact.update({
+    where: {
+      id: contact.id,
+    },
+    data: {
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      email: contact.email,
+      phone: contact.phone,
+    },
+    select: {
+      id: true,
+      first_name: true,
+      last_name: true,
+      email: true,
+      phone: true,
+    },
+  });
+};
+
+const remove = async (user, contactId) => {
+  contactId = validate(getContactValidation, contactId);
+
+  const checkContact = await prismaClient.contact.count({
+    where: {
+      username: user.username,
+      id: contactId,
+    },
+  });
+
+  if (checkContact == 0) {
+    throw new ResponseError(404, "contact is not found");
+  }
+
+  return prismaClient.contact.delete({
+    where: {
+      id: contactId,
+    },
+  });
+};
+
+const search = async (user, request) => {
+  let request = validate(searchContactValidation, request);
+  // 1 ((page - 1) * size) = 0;
+  // 2 ((page - 1) * size) = 10;
+
+  const skip = (request.page - 1) * request.size;
+
+  const filters = [];
+
+  filters.push({
+    username: user.username,
+  });
+
+  if (request.name) {
+    filters.push({
+      OR: [
+        {
+          first_name: {
+            contains: request.name,
+          },
+        },
+        {
+          last_name: {
+            contains: request.name,
+          },
+        },
+      ],
+    });
+  }
+
+  if (request.email) {
+    filters.push({
+      email: {
+        contains: request.email,
+      },
+    });
+  }
+
+  if (request.phone) {
+    filters.push({
+      phone: {
+        contains: request.phone,
+      },
+    });
+  }
+
+  const contacts = await prismaClient.contact.findMany({
+    where: {
+      AND: filters,
+    },
+    take: request.size,
+    skip: skip,
+  });
+
+  const totalItems = await prismaClient.contact.count({
+    where: {
+      AND: filters,
+    },
+  });
+
+  return {
+    data: contacts,
+    paging: {
+      page: request.page,
+      total_item: totalItems,
+      total_page: Math.ceil(totalItems / request.size),
+    },
+  };
+};
+export default { create, get, update, remove };
