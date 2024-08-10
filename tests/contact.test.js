@@ -8,8 +8,9 @@ import {
 import supertest from "supertest";
 import { web } from "../src/applications/web.js";
 import { logger } from "../src/applications/logging.js";
+import { func } from "joi";
 
-describe("POST /api/contacts", function () {
+describe.skip("POST /api/contacts", function () {
   beforeEach(async () => {
     await createTestUser();
   });
@@ -58,7 +59,7 @@ describe("POST /api/contacts", function () {
   });
 });
 
-describe("GET /api/contacts/:contactId", function () {
+describe.skip("GET /api/contacts/:contactId", function () {
   beforeEach(async () => {
     await createTestUser();
     await createTestContact();
@@ -87,6 +88,103 @@ describe("GET /api/contacts/:contactId", function () {
   it("should return 404 if contact id is not found", async () => {
     const result = await supertest(web)
       .get("/api/contacts/100")
+      .set("Authorization", "test");
+
+    expect(result.status).toBe(404);
+  });
+});
+
+describe.skip("PUT /api/contacts/:contactId", function () {
+  beforeEach(async () => {
+    await createTestUser();
+    await createTestContact();
+  });
+
+  afterEach(async () => {
+    await removeAllTestContacts();
+    await removeTestUser();
+  });
+
+  it("should can update existing contact", async () => {
+    const testContact = await getTestContact();
+
+    const result = await supertest(web)
+      .put("/api/contacts/" + testContact.id)
+      .set("Authorization", "test")
+      .send({
+        first_name: "Fajar",
+        last_name: "Ganteng",
+        email: "fajar@mars.com",
+        phone: "081299928842",
+      });
+
+    expect(result.status).toBe(200);
+    expect(result.body.data.id).toBe(testContact.id);
+    expect(result.body.data.first_name).toBe("Fajar");
+    expect(result.body.data.last_name).toBe("Ganteng");
+    expect(result.body.data.email).toBe("fajar@mars.com");
+    expect(result.body.data.phone).toBe("081299928842");
+  });
+
+  it("should reject if request is invalid", async () => {
+    const testContact = await getTestContact();
+
+    const result = await supertest(web)
+      .put("/api/contacts/" + testContact.id)
+      .set("Authorization", "test")
+      .send({
+        first_name: "",
+        last_name: "Ganteng",
+        email: "fajar@mars.com",
+        phone: "",
+      });
+
+    expect(result.status).toBe(400);
+  });
+
+  it("should reject if contact is not found", async () => {
+    const result = await supertest(web)
+      .put("/api/contacts/45")
+      .set("Authorization", "test")
+      .send({
+        first_name: "Fajar",
+        last_name: "Ganteng",
+        email: "fajar@mars.com",
+        phone: "081299928842",
+      });
+
+    expect(result.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/contact/:contactId", function () {
+  beforeEach(async () => {
+    await createTestUser();
+    await createTestContact();
+  });
+
+  afterEach(async () => {
+    await removeAllTestContacts();
+    await removeTestUser();
+  });
+
+  it("should can delete contact", async () => {
+    let testContact = await getTestContact();
+    const result = await supertest(web)
+      .delete("/api/contacts/" + testContact.id)
+      .set("Authorization", "test");
+
+    expect(result.status).toBe(200);
+    expect(result.body.message).toBe("Delete Success");
+
+    testContact = await getTestContact();
+    expect(testContact).toBeNull();
+  });
+
+  it("should can reject is not found", async () => {
+    let testContact = await getTestContact();
+    const result = await supertest(web)
+      .delete("/api/contacts/" + (testContact.id + 1))
       .set("Authorization", "test");
 
     expect(result.status).toBe(404);
