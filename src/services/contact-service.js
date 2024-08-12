@@ -103,13 +103,12 @@ const remove = async (user, contactId) => {
   });
 };
 
-const search = async (user, request) => {
-  let request = validate(searchContactValidation, request);
+const search = async (user, req) => {
+  let request = validate(searchContactValidation, req);
   // 1 ((page - 1) * size) = 0;
   // 2 ((page - 1) * size) = 10;
 
   const skip = (request.page - 1) * request.size;
-
   const filters = [];
 
   filters.push({
@@ -172,4 +171,4 @@ const search = async (user, request) => {
     },
   };
 };
-export default { create, get, update, remove };
+export default { create, get, update, remove, search };
