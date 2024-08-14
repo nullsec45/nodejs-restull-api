@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest ./tests/contact.test.js",
+    "test": "jest ./tests/address.test.js",
     "start:dev": "node ./src/main.js"
   },
   "jest": {
