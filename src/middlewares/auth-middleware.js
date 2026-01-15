@@ -1,12 +1,12 @@
 import { prismaClient } from "../applications/database.js";
+import { isAllowed } from "../services/rate-limiter-service.js";
 
 const authMiddleware = async (req, res, next) => {
   const token = req.get("Authorization");
 
   if (!token) {
-    res
-      .status(401)
-      .json({
+    res.status(401)
+    .json({
         errors: "Unauthorized",
       })
       .end();
@@ -25,8 +25,14 @@ const authMiddleware = async (req, res, next) => {
         })
         .end();
     } else {
-      req.user = user;
-      next();
+      if(await isAllowed(user)){
+        req.user = user;  
+        next();
+      }else{
+        res.status(429).json({
+          errors: "Too Many Requests",
+        }).end();
+      }
     }
   }
 };
