@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest ./tests/address.test.js",
-    "start:dev": "node ./src/main.js"
+    "start:dev": "node ./src/main.js",
+    "test:rate-limiter":"k6 run ./tests/performance-test-rate-limiter.js"
   },
   "jest": {
     "transform": {
@@ -20,6 +21,7 @@
     "@prisma/client": "^5.17.0",
     "bcrypt": "^5.1.1",
     "express": "^4.19.2",
+    "ioredis": "^5.9.1",
     "joi": "^17.13.3",
     "uuid": "^10.0.0",
     "winston": "^3.13.1"
