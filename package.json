@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest ./tests/address.test.js",
     "start:dev": "node ./src/main.js",
-    "test:rate-limiter":"k6 run ./tests/performance-test-rate-limiter.js"
+    "test:rate-limiter":"k6 run ./tests/performance-test-rate-limiter.js",
+    "test:performance-category":"k6 run ./tests/performance-test-category.js"
   },
   "jest": {
     "transform": {
